@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<%- include('partials/head', { title: 'Dashboard — ' + shopName }) %>
+<body>
+  <div class="app">
+    <%- include('partials/sidebar', { active: 'dashboard', shopName, userName, userRole }) %>
+
+    <div class="main">
+      <div class="page-header">
+        <h1>Dashboard</h1>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="label">Today's Sales</div>
+          <div class="value"><%= currency %><%= today.total.toFixed(2) %></div>
+          <div class="sub"><%= today.count %> sale<%= today.count === 1 ? '' : 's' %> today</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">This Month</div>
+          <div class="value"><%= currency %><%= month.total.toFixed(2) %></div>
+          <div class="sub"><%= month.count %> sale<%= month.count === 1 ? '' : 's' %> this month</div>
+        </div>
+        <div class="stat-card <%= lowStock.length ? 'warn' : '' %>">
+          <div class="label">Low Stock Items</div>
+          <div class="value"><%= lowStock.length %></div>
+          <div class="sub">Products need restocking</div>
+        </div>
+        <% if (userRole === 'owner') { %>
+          <div class="stat-card">
+            <div class="label">Profit Today</div>
+            <div class="value"><%= currency %><%= profitToday.profit.toFixed(2) %></div>
+            <div class="sub">Owner only</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Profit This Month</div>
+            <div class="value"><%= currency %><%= profitMonth.profit.toFixed(2) %></div>
+            <div class="sub">Owner only</div>
+          </div>
+        <% } %>
+      </div>
+
+      <div class="card" id="dashboard-chart-card">
+        <% const maxTotal = Math.max(1, ...dailyTotals.map(d => d.total)); %>
+        <svg viewBox="0 0 700 200" style="width:100%; height:200px;">
+          <% dailyTotals.forEach(function(d, i) {
+               const barWidth = 700 / dailyTotals.length;
+               const barHeight = (d.total / maxTotal) * 150;
+               const x = i * barWidth + barWidth * 0.2;
+               const y = 170 - barHeight;
+               const w = barWidth * 0.6;
+               const label = new Date(d.day + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short' });
+          %>
+            <rect x="<%= x %>" y="<%= y %>" width="<%= w %>" height="<%= barHeight %>"
+              rx="4" fill="var(--accent)">
+              <title><%= currency %><%= d.total.toFixed(2) %> on <%= d.day %></title>
+            </rect>
+            <text x="<%= x + w/2 %>" y="188" text-anchor="middle" font-size="11" fill="var(--muted)"><%= label %></text>
+          <% }); %>
+        </svg>
+      </div>
+
+      <div class="card">
+        <h2>Low Stock Alerts</h2>
+        <% if (lowStock.length === 0) { %>
+          <div class="empty-state">All products are well stocked.</div>
+        <% } else { %>
+          <table>
+            <thead>
+              <tr><th>Product</th><th>Category</th><th>Quantity Left</th><th>Threshold</th></tr>
+            </thead>
+            <tbody>
+              <% lowStock.forEach(function(p) { %>
+                <tr class="low-stock-row">
+                  <td><%= p.name %></td>
+                  <td><%= p.category || '—' %></td>
+                  <td class="num"><%= p.quantity %></td>
+                  <td class="num"><%= p.low_stock_threshold %></td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

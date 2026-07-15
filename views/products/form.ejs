@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<%- include('../partials/head', { title: (product && product.id ? 'Edit Product' : 'Add Product') }) %>
+<body>
+  <div class="app">
+    <%- include('../partials/sidebar', { active: 'products', shopName: '', userName, userRole }) %>
+
+    <div class="main">
+      <div class="page-header">
+        <h1><%= (product && product.id) ? 'Edit Product' : 'Add Product' %></h1>
+      </div>
+
+      <div class="card" style="max-width:600px;">
+        <% if (error) { %>
+          <div class="error-msg"><%= error %></div>
+        <% } %>
+
+        <form method="POST" action="<%= (product && product.id) ? '/products/' + product.id + '/edit' : '/products/new' %>">
+          <div class="field">
+            <label for="name">Product name</label>
+            <input type="text" id="name" name="name" required
+              value="<%= product ? product.name : '' %>" autofocus>
+          </div>
+
+          <div class="form-grid">
+            <div class="field">
+              <label for="category">Category</label>
+              <input type="text" id="category" name="category"
+                value="<%= product && product.category ? product.category : '' %>"
+                placeholder="e.g. Beverages">
+            </div>
+            <div class="field">
+              <label for="price">Selling Price</label>
+              <input type="number" step="0.01" min="0" id="price" name="price" required
+                value="<%= product ? product.price : '' %>">
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="field">
+              <label for="cost_price">Cost Price (what you paid, optional)</label>
+              <input type="number" step="0.01" min="0" id="cost_price" name="cost_price"
+                value="<%= product && product.cost_price !== undefined ? product.cost_price : '' %>"
+                placeholder="Used for profit reports">
+            </div>
+            <div class="field">
+              <label for="barcode">Barcode (optional)</label>
+              <input type="text" id="barcode" name="barcode"
+                value="<%= product && product.barcode ? product.barcode : '' %>"
+                placeholder="Scan or type a barcode">
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="field">
+              <label for="quantity">Quantity in stock</label>
+              <input type="number" min="0" id="quantity" name="quantity"
+                value="<%= product && product.quantity !== undefined ? product.quantity : 0 %>">
+            </div>
+            <div class="field">
+              <label for="low_stock_threshold">Low stock alert level</label>
+              <input type="number" min="0" id="low_stock_threshold" name="low_stock_threshold"
+                value="<%= product && product.low_stock_threshold !== undefined ? product.low_stock_threshold : 5 %>">
+            </div>
+          </div>
+
+          <div class="actions-row">
+            <button type="submit" class="btn">Save Product</button>
+            <a href="/products" class="btn btn-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

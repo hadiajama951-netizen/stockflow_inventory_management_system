@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<%- include('../partials/head', { title: 'Customers' }) %>
+<body>
+  <div class="app">
+    <%- include('../partials/sidebar', { active: 'customers', shopName: '', userName, userRole }) %>
+
+    <div class="main">
+      <div class="page-header">
+        <h1>Customers</h1>
+        <div class="row-actions">
+          <div class="dropdown">
+            <button type="button" class="btn btn-secondary" data-dropdown-trigger>Download Report ▾</button>
+            <div class="dropdown-menu">
+              <a href="/customers/export/all/csv">All Customers — CSV</a>
+              <a href="/customers/export/all/pdf">All Customers — PDF</a>
+            </div>
+          </div>
+          <% if (userRole === 'owner' && customers.length > 0) { %>
+            <form action="/customers/delete-all" method="POST"
+              data-confirm-modal="Delete All Customers?"
+              data-confirm-detail="This permanently removes every customer from your database. Their past sales stay in Sales History, but will no longer be linked to a customer profile. This cannot be undone.">
+              <button type="submit" class="btn btn-danger">Delete All Customers</button>
+            </form>
+          <% } %>
+        </div>
+      </div>
+
+      <input type="text" id="customer-search" class="live-search" placeholder="Search customers by name...">
+
+      <div class="card">
+        <% if (customers.length === 0) { %>
+          <div class="empty-state">No customers yet. They're added automatically whenever you enter a customer name during a sale.</div>
+        <% } else { %>
+          <table id="customers-table">
+            <thead>
+              <tr><th>Name</th><th>Phone</th><th>Purchases</th><th>Total Spent</th><th></th></tr>
+            </thead>
+            <tbody>
+              <% customers.forEach(function(c) { %>
+                <tr data-name="<%= c.name.toLowerCase() %>">
+                  <td><%= c.name %></td>
+                  <td><%= c.phone || '—' %></td>
+                  <td class="num"><%= c.sale_count %></td>
+                  <td class="num"><%= currency %><%= c.total_spent.toFixed(2) %></td>
+                  <td>
+                    <div class="row-actions">
+                      <a href="/customers/<%= c.id %>">View History</a>
+                      <div class="dropdown">
+                        <button type="button" class="btn-secondary btn btn-tiny" data-dropdown-trigger>Download ▾</button>
+                        <div class="dropdown-menu">
+                          <a href="/customers/<%= c.id %>/export/pdf">This Customer — PDF</a>
+                          <a href="/customers/export/all/csv">All Customers — CSV</a>
+                        </div>
+                      </div>
+                      <% if (userRole === 'owner') { %>
+                        <form action="/customers/<%= c.id %>/delete" method="POST"
+                          onsubmit="return confirm('Delete this customer? Their past sales will be kept but unlinked.');">
+                          <button type="submit" class="btn-secondary btn btn-tiny">Delete</button>
+                        </form>
+                      <% } %>
+                    </div>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+          <div class="empty-state" id="customer-no-results" style="display:none;">No customers match your search.</div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Real-time client-side filtering -- instant, no page reload or
+    // server round trip needed for a simple name search.
+    const searchBox = document.getElementById('customer-search');
+    if (searchBox) {
+      searchBox.addEventListener('input', function () {
+        const term = searchBox.value.trim().toLowerCase();
+        const rows = document.querySelectorAll('#customers-table tbody tr');
+        let visibleCount = 0;
+        rows.forEach(function (row) {
+          const match = row.dataset.name.includes(term);
+          row.style.display = match ? '' : 'none';
+          if (match) visibleCount++;
+        });
+        const noResults = document.getElementById('customer-no-results');
+        if (noResults) noResults.style.display = visibleCount === 0 ? 'block' : 'none';
+      });
+    }
+  </script>
+</body>
+</html>

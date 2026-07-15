@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<%- include('partials/head', { title: 'Set up your shop' }) %>
+<body>
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="brand">StockFlow</div>
+      <h1>Set up your shop</h1>
+
+      <% if (error) { %>
+        <div class="error-msg"><%= error %></div>
+      <% } %>
+
+      <form method="POST" action="/register">
+        <div class="field">
+          <label for="name">Your name</label>
+          <input type="text" id="name" name="name" required autofocus>
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required>
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" required minlength="6">
+        </div>
+        <button type="submit" class="btn btn-block">Create owner account</button>
+      </form>
+
+      <div class="auth-footer">This creates the owner account for your shop. You can add staff accounts and set your shop name later in Settings.</div>
+    </div>
+  </div>
+</body>
+</html>

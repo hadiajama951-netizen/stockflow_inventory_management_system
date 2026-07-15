@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<%- include('partials/head', { title: 'Settings' }) %>
+<body>
+  <div class="app">
+    <%- include('partials/sidebar', { active: 'settings', shopName: settings.shop_name, userName, userRole }) %>
+
+    <div class="main">
+      <div class="page-header">
+        <h1>Settings</h1>
+      </div>
+
+      <% if (saved) { %>
+        <div class="error-msg" style="background:#e7f3ec; color:var(--accent-dark);">Settings saved.</div>
+      <% } %>
+      <% if (demoGenerated) { %>
+        <div class="error-msg" style="background:#e7f3ec; color:var(--accent-dark);">Demo data added: sample products, customers, and sales.</div>
+      <% } %>
+      <% if (typeof passwordSaved !== 'undefined' && passwordSaved) { %>
+        <div class="error-msg" style="background:#e7f3ec; color:var(--accent-dark);">Password updated.</div>
+      <% } %>
+      <% if (typeof passwordError !== 'undefined' && passwordError) { %>
+        <div class="error-msg"><%= passwordError %></div>
+      <% } %>
+
+      <div class="card" style="max-width:500px;">
+        <h2>Shop Details</h2>
+        <form method="POST" action="/settings">
+          <div class="field">
+            <label for="shop_name">Shop name</label>
+            <input type="text" id="shop_name" name="shop_name" value="<%= settings.shop_name %>" required>
+          </div>
+          <div class="field">
+            <label for="currency">Currency symbol</label>
+            <input type="text" id="currency" name="currency" value="<%= settings.currency %>" required maxlength="4">
+          </div>
+          <div class="field">
+            <label for="timezone">Time zone</label>
+            <select id="timezone" name="timezone">
+              <% timezones.forEach(function(tz) { %>
+                <option value="<%= tz.value %>" <%= settings.timezone === tz.value ? 'selected' : '' %>>
+                  <%= tz.label %>
+                </option>
+              <% }); %>
+            </select>
+          </div>
+          <div class="field">
+            <label for="tax_rate">Tax rate % (applied automatically to every sale, leave 0 if not needed)</label>
+            <input type="number" step="0.01" min="0" max="100" id="tax_rate" name="tax_rate"
+              value="<%= settings.tax_rate || '0' %>">
+          </div>
+          <button type="submit" class="btn">Save Settings</button>
+        </form>
+      </div>
+
+      <div class="card" style="max-width:500px;">
+        <h2>Theme Color</h2>
+        <p style="color: var(--muted); font-size: 13px; margin-top:-8px; margin-bottom:16px;">
+          Choose an accent color for buttons, links, and highlights across the whole system.
+        </p>
+        <form method="POST" action="/settings">
+          <input type="hidden" name="shop_name" value="<%= settings.shop_name %>">
+          <input type="hidden" name="currency" value="<%= settings.currency %>">
+          <input type="hidden" name="timezone" value="<%= settings.timezone %>">
+          <input type="hidden" name="tax_rate" value="<%= settings.tax_rate || '0' %>">
+          <input type="hidden" name="accent_color" id="accent_color_input" value="<%= settings.accent_color || '#2f6f4f' %>">
+
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px;">
+            <% const presets = [
+              { color: '#2f6f4f', name: 'Forest Green' },
+              { color: '#1e3a5f', name: 'Navy Blue' },
+              { color: '#7a2e3a', name: 'Burgundy' },
+              { color: '#1f6f6b', name: 'Teal' },
+              { color: '#37474f', name: 'Charcoal' },
+              { color: '#8a4b2f', name: 'Terracotta' },
+            ]; %>
+            <% presets.forEach(function(p) { %>
+              <button type="button" class="swatch-btn" data-color="<%= p.color %>"
+                title="<%= p.name %>"
+                style="width:38px; height:38px; border-radius:8px; border:2px solid var(--line); background:<%= p.color %>; cursor:pointer;">
+              </button>
+            <% }); %>
+          </div>
+
+          <div class="field" style="max-width:220px;">
+            <label for="custom_color">Or pick a custom color</label>
+            <input type="color" id="custom_color" value="<%= settings.accent_color || '#2f6f4f' %>"
+              style="width:60px; height:38px; padding:2px; cursor:pointer;">
+          </div>
+
+          <button type="submit" class="btn" style="margin-top:10px;">Save Theme Color</button>
+        </form>
+      </div>
+
+      <script>
+        const hiddenInput = document.getElementById('accent_color_input');
+        const customPicker = document.getElementById('custom_color');
+
+        document.querySelectorAll('.swatch-btn').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            hiddenInput.value = btn.dataset.color;
+            customPicker.value = btn.dataset.color;
+          });
+        });
+
+        customPicker.addEventListener('input', function() {
+          hiddenInput.value = customPicker.value;
+        });
+      </script>
+
+      <div class="card" style="max-width:500px;">
+        <h2>Change Password</h2>
+        <p style="color: var(--muted); font-size: 13px; margin-top:-8px; margin-bottom:16px;">
+          Update your own login password. Staff members can do the same from "My Account" in the sidebar.
+        </p>
+        <form method="POST" action="/account/change-password">
+          <input type="hidden" name="return_to" value="/settings">
+          <div class="field">
+            <label for="settings_current_password">Current password</label>
+            <input type="password" id="settings_current_password" name="current_password" required>
+          </div>
+          <div class="field">
+            <label for="settings_new_password">New password</label>
+            <input type="password" id="settings_new_password" name="new_password" required minlength="6">
+          </div>
+          <div class="field">
+            <label for="settings_confirm_password">Confirm new password</label>
+            <input type="password" id="settings_confirm_password" name="confirm_password" required minlength="6">
+          </div>
+          <button type="submit" class="btn">Update Password</button>
+        </form>
+      </div>
+
+      <div class="card" style="max-width:500px;">
+        <h2>Demo Data</h2>
+        <p style="color: var(--muted); font-size: 13px; margin-top:-8px; margin-bottom:16px;">
+          Populate the database with realistic sample products, customers, and sales --
+          handy for testing the system before you go live. This only adds data;
+          it never deletes or changes anything that's already there.
+        </p>
+        <form method="POST" action="/settings/generate-demo-data">
+          <button type="submit" class="btn btn-secondary">Generate Demo Data</button>
+        </form>
+      </div>
+
+      <div class="card" style="max-width:500px;">
+        <h2>Backup Your Data</h2>
+        <p style="color: var(--muted); font-size: 13px; margin-top:-8px; margin-bottom:16px;">
+          Download a full backup of your shop's data (products, sales, customers, staff).
+          Keep it somewhere safe, like a USB drive or cloud storage.
+        </p>
+        <a href="/settings/backup" class="btn">Download Backup</a>
+
+        <p style="color: var(--muted); font-size: 12px; margin-top:16px; margin-bottom:0;">
+          <strong>To restore a backup:</strong> stop the app, replace the file at
+          <code>db/stockflow.db</code> with your downloaded backup file, then start the app again.
+          We do this manually rather than with a "restore" button in the app itself, since
+          replacing the database while the app is running could corrupt your data.
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

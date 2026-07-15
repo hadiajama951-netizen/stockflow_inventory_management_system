@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<%- include('../partials/head', { title: 'New Sale' }) %>
+<body>
+  <div class="app">
+    <%- include('../partials/sidebar', { active: 'new-sale', shopName: '', userName, userRole }) %>
+
+    <div class="main">
+      <div class="page-header">
+        <h1>New Sale</h1>
+      </div>
+
+      <% if (error) { %>
+        <div class="error-msg"><%= error %></div>
+      <% } %>
+
+      <% if (products.length === 0) { %>
+        <div class="card"><div class="empty-state">You need to add products before recording a sale. <a href="/products/new">Add a product</a></div></div>
+      <% } else { %>
+        <div class="card" style="max-width:320px;">
+          <label for="barcode_scan" style="display:block; font-size:13px; color:var(--muted); margin-bottom:6px;">
+            Scan or type a barcode, then press Enter to quick-add
+          </label>
+          <input type="text" id="barcode_scan" placeholder="Barcode..." autocomplete="off"
+            style="width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:6px; font-size:14px;">
+          <div id="barcode_status" style="font-size:12px; margin-top:6px; color: var(--muted);"></div>
+        </div>
+
+        <div class="card">
+          <form method="POST" action="/sales/new" id="sale-form">
+            <div class="form-grid" style="max-width:600px;">
+              <div class="field">
+                <label for="customer_name">Customer name (optional)</label>
+                <input type="text" id="customer_name" name="customer_name" placeholder="e.g. Ahmed Ali" list="customer_suggestions" autocomplete="off">
+                <datalist id="customer_suggestions"></datalist>
+              </div>
+              <div class="field">
+                <label for="customer_phone">Customer phone (optional)</label>
+                <input type="text" id="customer_phone" name="customer_phone" placeholder="e.g. 063xxxxxxx">
+              </div>
+            </div>
+
+            <div id="rows"></div>
+
+            <button type="button" class="btn btn-secondary" id="add-row" style="margin-top:8px;">+ Add another product</button>
+
+            <div class="form-grid" style="max-width:600px; margin-top:20px;">
+              <div class="field">
+                <label for="discount">Discount amount (optional)</label>
+                <input type="number" step="0.01" min="0" id="discount" name="discount" value="0" placeholder="0.00">
+              </div>
+              <div class="field">
+                <label for="payment_method">Payment method</label>
+                <select id="payment_method" name="payment_method">
+                  <% paymentMethods.forEach(function(pm) { %>
+                    <option value="<%= pm %>"><%= pm %></option>
+                  <% }); %>
+                </select>
+              </div>
+            </div>
+
+            <div class="card" style="background: var(--bg); margin-top:12px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <span style="color: var(--muted); font-size:13px;">Subtotal</span>
+                <span class="num" id="subtotal-display"><%= currency %>0.00</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <span style="color: var(--muted); font-size:13px;">Discount</span>
+                <span class="num" id="discount-display">-<%= currency %>0.00</span>
+              </div>
+              <% if (taxRate > 0) { %>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                  <span style="color: var(--muted); font-size:13px;">Tax (<%= taxRate %>%)</span>
+                  <span class="num" id="tax-display">+<%= currency %>0.00</span>
+                </div>
+              <% } %>
+              <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--line); padding-top:8px;">
+                <strong>Total</strong>
+                <span class="num" id="total-display" style="font-size:20px; font-weight:600;"><%= currency %>0.00</span>
+              </div>
+            </div>
+
+            <div class="actions-row">
+              <button type="submit" class="btn">Complete Sale</button>
+              <a href="/dashboard" class="btn btn-secondary">Cancel</a>
+            </div>
+          </form>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <script>
+    const PRODUCTS = <%- JSON.stringify(products) %>;
+    const CURRENCY = "<%= currency %>";
+    const TAX_RATE = <%= taxRate %>;
+    const rowsEl = document.getElementById('rows');
+    const discountInput = document.getElementById('discount');
+    let rowCount = 0;
+
+    function addRow(presetProductId) {
+      rowCount++;
+      const row = document.createElement('div');
+      row.className = 'sale-row';
+      row.innerHTML = `
+        <select name="product_id" class="product-select" required>
+          <option value="">Select product</option>
+          ${PRODUCTS.map(p => `<option value="${p.id}" data-price="${p.price}" data-stock="${p.quantity}">${p.name} (${p.quantity} in stock)</option>`).join('')}
+        </select>
+        <input type="number" name="quantity" min="1" value="1" class="qty-input" required>
+        <span class="num subtotal">${CURRENCY}0.00</span>
+        <button type="button" class="btn-secondary btn remove-row" style="padding:6px 10px;">Remove</button>
+      `;
+      rowsEl.appendChild(row);
+
+      const select = row.querySelector('.product-select');
+      if (presetProductId) select.value = presetProductId;
+
+      row.querySelector('.remove-row').addEventListener('click', () => {
+        row.remove();
+        updateTotal();
+      });
+      select.addEventListener('change', () => updateRow(row));
+      row.querySelector('.qty-input').addEventListener('input', () => updateRow(row));
+
+      updateRow(row);
+      return row;
+    }
+
+    function updateRow(row) {
+      const select = row.querySelector('.product-select');
+      const qty = parseInt(row.querySelector('.qty-input').value) || 0;
+      const opt = select.options[select.selectedIndex];
+      const price = opt && opt.dataset.price ? parseFloat(opt.dataset.price) : 0;
+      const subtotal = price * qty;
+      row.querySelector('.subtotal').textContent = CURRENCY + subtotal.toFixed(2);
+      updateTotal();
+    }
+
+    function updateTotal() {
+      let subtotal = 0;
+      document.querySelectorAll('.sale-row').forEach(row => {
+        const select = row.querySelector('.product-select');
+        const qty = parseInt(row.querySelector('.qty-input').value) || 0;
+        const opt = select.options[select.selectedIndex];
+        const price = opt && opt.dataset.price ? parseFloat(opt.dataset.price) : 0;
+        subtotal += price * qty;
+      });
+
+      let discount = parseFloat(discountInput.value) || 0;
+      if (discount < 0) discount = 0;
+      if (discount > subtotal) discount = subtotal;
+
+      const afterDiscount = subtotal - discount;
+      const tax = afterDiscount * (TAX_RATE / 100);
+      const total = afterDiscount + tax;
+
+      document.getElementById('subtotal-display').textContent = CURRENCY + subtotal.toFixed(2);
+      document.getElementById('discount-display').textContent = '-' + CURRENCY + discount.toFixed(2);
+      const taxDisplay = document.getElementById('tax-display');
+      if (taxDisplay) taxDisplay.textContent = '+' + CURRENCY + tax.toFixed(2);
+      document.getElementById('total-display').textContent = CURRENCY + total.toFixed(2);
+    }
+
+    document.getElementById('add-row').addEventListener('click', () => addRow());
+    discountInput.addEventListener('input', updateTotal);
+    addRow(); // start with one row
+
+    // Barcode scanning: most USB barcode scanners act like a keyboard,
+    // typing the code quickly then pressing Enter automatically.
+    const barcodeInput = document.getElementById('barcode_scan');
+    const barcodeStatus = document.getElementById('barcode_status');
+
+    barcodeInput.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      const code = barcodeInput.value.trim();
+      if (!code) return;
+
+      fetch('/products/api/barcode/' + encodeURIComponent(code))
+        .then(res => {
+          if (!res.ok) throw new Error('not found');
+          return res.json();
+        })
+        .then(product => {
+          // If this product is already in a row, just increase its quantity.
+          const existingSelect = Array.from(document.querySelectorAll('.product-select'))
+            .find(s => s.value === String(product.id));
+          if (existingSelect) {
+            const row = existingSelect.closest('.sale-row');
+            const qtyInput = row.querySelector('.qty-input');
+            qtyInput.value = (parseInt(qtyInput.value) || 0) + 1;
+            updateRow(row);
+          } else {
+            addRow(product.id);
+          }
+          barcodeStatus.style.color = 'var(--accent-dark)';
+          barcodeStatus.textContent = 'Added: ' + product.name;
+        })
+        .catch(() => {
+          barcodeStatus.style.color = 'var(--warn)';
+          barcodeStatus.textContent = 'No product found with that barcode.';
+        });
+
+      barcodeInput.value = '';
+    });
+
+    // Customer name autocomplete: suggests names from past customers as you type.
+    const customerInput = document.getElementById('customer_name');
+    const suggestionsList = document.getElementById('customer_suggestions');
+    let customerFetchTimer = null;
+
+    customerInput.addEventListener('input', function () {
+      clearTimeout(customerFetchTimer);
+      const q = customerInput.value.trim();
+      if (!q) { suggestionsList.innerHTML = ''; return; }
+      customerFetchTimer = setTimeout(() => {
+        fetch('/customers/api/search?q=' + encodeURIComponent(q))
+          .then(res => res.json())
+          .then(list => {
+            suggestionsList.innerHTML = list.map(c => `<option value="${c.name}">`).join('');
+          })
+          .catch(() => {});
+      }, 200);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+<button type="button" id="mobile-nav-toggle" aria-label="Open menu">☰</button>
+
+<div class="sidebar" id="sidebar">
+  <div class="brand">Stock<span>Flow</span></div>
+  <div class="shop-name"><%= typeof shopName !== 'undefined' ? shopName : '' %></div>
+
+  <a class="nav-link <%= active === 'dashboard' ? 'active' : '' %>" href="/dashboard">Dashboard</a>
+  <a class="nav-link <%= active === 'products' ? 'active' : '' %>" href="/products">Products</a>
+  <a class="nav-link <%= active === 'new-sale' ? 'active' : '' %>" href="/sales/new">New Sale</a>
+  <a class="nav-link <%= active === 'sales' ? 'active' : '' %>" href="/sales">Sales History</a>
+  <a class="nav-link <%= active === 'customers' ? 'active' : '' %>" href="/customers">Customers</a>
+  <% if (userRole === 'owner') { %>
+    <a class="nav-link <%= active === 'staff' ? 'active' : '' %>" href="/staff">Staff Accounts</a>
+    <a class="nav-link <%= active === 'settings' ? 'active' : '' %>" href="/settings">Settings</a>
+  <% } %>
+  <a class="nav-link <%= active === 'account' ? 'active' : '' %>" href="/account">My Account</a>
+
+  <div class="sidebar-footer">
+    <div><%= userName %> &middot; <%= userRole %></div>
+    <form action="/logout" method="POST">
+      <button type="submit">Log out</button>
+    </form>
+  </div>
+</div>
+
+<%- include('helpbot') %>

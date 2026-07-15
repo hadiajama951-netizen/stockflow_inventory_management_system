@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<%- include('../partials/head', { title: 'Sales History' }) %>
+<body>
+  <div class="app">
+    <%- include('../partials/sidebar', { active: 'sales', shopName: '', userName, userRole }) %>
+
+    <div class="main">
+      <div class="page-header">
+        <h1>Sales History</h1>
+        <% if (userRole === 'owner' && sales.length > 0) { %>
+          <form action="/sales/delete-all" method="POST"
+            data-confirm-modal="Delete All Sales History?"
+            data-confirm-detail="This permanently purges every sale and invoice from the database. Stock levels for any active (non-voided) sale will be restored first. This cannot be undone.">
+            <button type="submit" class="btn btn-danger">Delete All Sales History</button>
+          </form>
+        <% } %>
+      </div>
+
+      <div class="card">
+        <form method="GET" action="/sales" style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; margin-bottom:4px;">
+          <div class="field" style="margin-bottom:0;">
+            <label for="customer">Customer name</label>
+            <input type="text" id="customer" name="customer" placeholder="Leave empty for everyone"
+              value="<%= filters.customer %>" style="width:220px;">
+          </div>
+          <div class="field" style="margin-bottom:0;">
+            <label for="start">From date</label>
+            <input type="date" id="start" name="start" value="<%= filters.start %>">
+          </div>
+          <div class="field" style="margin-bottom:0;">
+            <label for="end">To date</label>
+            <input type="date" id="end" name="end" value="<%= filters.end %>">
+          </div>
+          <div class="field" style="margin-bottom:0;">
+            <label for="payment_method">Payment method</label>
+            <select id="payment_method" name="payment_method">
+              <option value="">All</option>
+              <% paymentMethods.forEach(function(pm) { %>
+                <option value="<%= pm %>" <%= filters.payment_method === pm ? 'selected' : '' %>><%= pm %></option>
+              <% }); %>
+            </select>
+          </div>
+          <button type="submit" class="btn">Filter</button>
+          <a href="/sales" class="btn btn-secondary">Clear</a>
+        </form>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-bottom:16px;">
+        <%
+          const qs = new URLSearchParams();
+          if (filters.customer) qs.set('customer', filters.customer);
+          if (filters.start) qs.set('start', filters.start);
+          if (filters.end) qs.set('end', filters.end);
+          if (filters.payment_method) qs.set('payment_method', filters.payment_method);
+          const qsString = qs.toString();
+        %>
+        <a href="/sales/export/csv<%= qsString ? '?' + qsString : '' %>" class="btn btn-secondary">
+          Download Excel (CSV)<%= filters.customer ? ' — ' + filters.customer : ' — Everyone' %>
+        </a>
+        <a href="/sales/export/pdf<%= qsString ? '?' + qsString : '' %>" class="btn btn-secondary">
+          Download PDF Report<%= filters.customer ? ' — ' + filters.customer : ' — Everyone' %>
+        </a>
+      </div>
+
+      <div class="card">
+        <% if (sales.length === 0) { %>
+          <div class="empty-state">No sales match this search.</div>
+        <% } else { %>
+          <table>
+            <thead>
+              <tr><th>Invoice #</th><th>Customer</th><th>Date</th><th>Recorded By</th><th>Payment</th><th>Total</th><th>Status</th><th></th></tr>
+            </thead>
+            <tbody>
+              <% sales.forEach(function(s) { %>
+                <tr style="<%= s.voided ? 'opacity:0.55;' : '' %>">
+                  <td>#<%= s.id %></td>
+                  <td><%= s.customer_name || '—' %></td>
+                  <td><%= formatDate(s.created_at) %></td>
+                  <td><%= s.user_name %></td>
+                  <td><%= s.payment_method || 'Cash' %></td>
+                  <td class="num"><%= currency %><%= s.total.toFixed(2) %></td>
+                  <td>
+                    <% if (s.voided) { %>
+                      <span class="badge">Voided</span>
+                    <% } else { %>
+                      <span class="badge ok">Completed</span>
+                    <% } %>
+                  </td>
+                  <td>
+                    <div class="row-actions">
+                      <a href="/sales/<%= s.id %>">View</a>
+                      <a href="/sales/<%= s.id %>/invoice">PDF</a>
+                      <% if (userRole === 'owner') { %>
+                        <form action="/sales/<%= s.id %>/delete" method="POST"
+                          onsubmit="return confirm('Permanently delete this sale? This cannot be undone.');">
+                          <button type="submit" class="btn-secondary btn btn-tiny">Delete</button>
+                        </form>
+                      <% } %>
+                    </div>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<%- include('../partials/head', { title: customer.name + ' — Purchase History' }) %>
+<body>
+  <div class="app">
+    <%- include('../partials/sidebar', { active: 'customers', shopName: '', userName, userRole }) %>
+
+    <div class="main">
+      <div class="page-header">
+        <h1><%= customer.name %></h1>
+        <div class="row-actions">
+          <a href="/customers/<%= customer.id %>/export/pdf" class="btn btn-secondary">Download Report — PDF</a>
+          <a href="/customers" class="btn btn-secondary">Back to Customers</a>
+        </div>
+      </div>
+
+      <% if (customer.phone) { %>
+        <p style="color: var(--muted); margin-top:-12px;">Phone: <%= customer.phone %></p>
+      <% } %>
+
+      <div class="card">
+        <h2>Purchase History</h2>
+        <% if (sales.length === 0) { %>
+          <div class="empty-state">No purchases recorded yet.</div>
+        <% } else { %>
+          <table>
+            <thead>
+              <tr><th>Invoice #</th><th>Date</th><th>Total</th><th>Status</th><th></th></tr>
+            </thead>
+            <tbody>
+              <% sales.forEach(function(s) { %>
+                <tr style="<%= s.voided ? 'opacity:0.55;' : '' %>">
+                  <td>#<%= s.id %></td>
+                  <td><%= formatDate(s.created_at) %></td>
+                  <td class="num"><%= currency %><%= s.total.toFixed(2) %></td>
+                  <td>
+                    <% if (s.voided) { %>
+                      <span class="badge">Voided</span>
+                    <% } else { %>
+                      <span class="badge ok">Completed</span>
+                    <% } %>
+                  </td>
+                  <td><a href="/sales/<%= s.id %>">View</a> &middot; <a href="/sales/<%= s.id %>/invoice">PDF</a></td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

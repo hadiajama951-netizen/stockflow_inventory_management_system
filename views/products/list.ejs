@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<%- include('../partials/head', { title: 'Products — ' + (typeof shopName !== 'undefined' ? shopName : 'StockFlow') }) %>
+<body>
+  <div class="app">
+    <%- include('../partials/sidebar', { active: 'products', shopName: typeof shopName !== 'undefined' ? shopName : '', userName, userRole }) %>
+
+    <div class="main">
+      <div class="page-header">
+        <h1>Products</h1>
+        <div class="row-actions">
+          <div class="dropdown">
+            <button type="button" class="btn btn-secondary" data-dropdown-trigger>Download ▾</button>
+            <div class="dropdown-menu">
+              <a href="/products/export/all/csv">Entire Catalog — CSV</a>
+            </div>
+          </div>
+          <a href="/products/new" class="btn">+ Add Product</a>
+        </div>
+      </div>
+
+      <form method="GET" action="/products" style="margin-bottom:16px; max-width:320px;">
+        <input type="text" name="search" placeholder="Search by name or category..."
+          value="<%= search %>"
+          style="width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:6px; font-size:14px;">
+      </form>
+
+      <div class="card">
+        <% if (products.length === 0) { %>
+          <div class="empty-state"><%= search ? 'No products match your search.' : 'No products yet. Add your first product to get started.' %></div>
+        <% } else { %>
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% products.forEach(function(p) { %>
+                <tr class="<%= p.quantity <= p.low_stock_threshold ? 'low-stock-row' : '' %>">
+                  <td><%= p.name %></td>
+                  <td><%= p.category || '—' %></td>
+                  <td class="num"><%= currency %><%= p.price.toFixed(2) %></td>
+                  <td class="num">
+                    <%= p.quantity %>
+                    <% if (p.quantity <= p.low_stock_threshold) { %>
+                      <span class="badge">Low</span>
+                    <% } else { %>
+                      <span class="badge ok">OK</span>
+                    <% } %>
+                  </td>
+                  <td>
+                    <div class="row-actions">
+                      <a href="/products/<%= p.id %>/edit">Edit</a>
+                      <div class="dropdown">
+                        <button type="button" class="btn-secondary btn btn-tiny" data-dropdown-trigger>Download ▾</button>
+                        <div class="dropdown-menu">
+                          <a href="/products/<%= p.id %>/export/pdf">This Product — PDF</a>
+                          <a href="/products/export/all/csv">Entire Catalog — CSV</a>
+                        </div>
+                      </div>
+                      <form action="/products/<%= p.id %>/delete" method="POST"
+                        onsubmit="return confirm('Delete this product?');">
+                        <button type="submit" class="btn-secondary btn btn-tiny">Delete</button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

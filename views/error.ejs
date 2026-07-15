@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<%- include('partials/head', { title: 'Error' }) %>
+<body>
+  <div class="auth-wrap">
+    <div class="auth-card" style="text-align:center;">
+      <div class="brand">StockFlow</div>
+      <h1>Something's not right</h1>
+      <p style="color: var(--ink-soft);"><%= message %></p>
+      <a href="/dashboard" class="btn">Go to Dashboard</a>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,6 @@
+node_modules/
+.env
+db/stockflow.db
+db/sessions.db
+db/.session_secret
+*.log

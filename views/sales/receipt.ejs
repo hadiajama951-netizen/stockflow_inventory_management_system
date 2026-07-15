@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<%- include('../partials/head', { title: 'Sale Complete' }) %>
+<body>
+  <div class="app">
+    <%- include('../partials/sidebar', { active: 'new-sale', shopName, userName, userRole }) %>
+
+    <div class="main">
+      <div class="page-header">
+        <h1><%= sale.voided ? 'Sale (Voided)' : 'Sale Complete ✓' %></h1>
+        <a href="/sales/<%= sale.id %>/invoice" class="btn">Download Invoice (PDF)</a>
+      </div>
+
+      <% if (sale.voided) { %>
+        <div class="error-msg">This sale was voided/cancelled on <%= formatDate(sale.voided_at) %>. Stock was returned to inventory.</div>
+      <% } %>
+
+      <div class="card receipt-box">
+        <h2 style="font-family: var(--font-display);"><%= shopName %></h2>
+        <div style="color: var(--muted); margin-bottom: 16px;">
+          Invoice #<%= sale.id %> &middot; <%= formatDate(sale.created_at) %>
+        </div>
+        <% if (sale.customer_name) { %>
+          <div style="margin-bottom: 16px;"><strong>Customer:</strong> <%= sale.customer_name %></div>
+        <% } %>
+        <div style="margin-bottom: 16px;"><strong>Payment Method:</strong> <%= sale.payment_method || 'Cash' %></div>
+
+        <table>
+          <thead>
+            <tr><th>Item</th><th>Qty</th><th>Price</th><th>Subtotal</th></tr>
+          </thead>
+          <tbody>
+            <% sale.items.forEach(function(item) { %>
+              <tr>
+                <td><%= item.product_name %></td>
+                <td class="num"><%= item.quantity %></td>
+                <td class="num"><%= currency %><%= item.unit_price.toFixed(2) %></td>
+                <td class="num"><%= currency %><%= item.subtotal.toFixed(2) %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+
+        <% if (sale.discount > 0) { %>
+          <div style="display:flex; justify-content:space-between; margin-top:10px; color: var(--muted);">
+            <span>Discount</span>
+            <span class="num">-<%= currency %><%= sale.discount.toFixed(2) %></span>
+          </div>
+        <% } %>
+
+        <% if (sale.tax_amount > 0) { %>
+          <div style="display:flex; justify-content:space-between; margin-top:6px; color: var(--muted);">
+            <span>Tax</span>
+            <span class="num">+<%= currency %><%= sale.tax_amount.toFixed(2) %></span>
+          </div>
+        <% } %>
+
+        <div class="total-line">Total: <%= currency %><%= sale.total.toFixed(2) %></div>
+      </div>
+
+      <div class="actions-row">
+        <a href="/sales/new" class="btn btn-secondary">Record Another Sale</a>
+        <% if (userRole === 'owner' && !sale.voided) { %>
+          <form action="/sales/<%= sale.id %>/void" method="POST"
+            onsubmit="return confirm('Void this sale? Stock will be returned to inventory. This cannot be undone.');">
+            <button type="submit" class="btn btn-danger">Void This Sale</button>
+          </form>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<%- include('partials/head', { title: 'Edit Account' }) %>
+<body>
+  <div class="app">
+    <%- include('partials/sidebar', { active: 'staff', shopName: '', userName, userRole }) %>
+
+    <div class="main">
+      <div class="page-header">
+        <h1>Edit Account</h1>
+      </div>
+
+      <div class="card" style="max-width:500px;">
+        <% if (error) { %>
+          <div class="error-msg"><%= error %></div>
+        <% } %>
+
+        <form method="POST" action="/staff/<%= staffUser.id %>/edit">
+          <div class="field">
+            <label for="name">Full name</label>
+            <input type="text" id="name" name="name" required value="<%= staffUser.name %>">
+          </div>
+          <div class="field">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required value="<%= staffUser.email %>">
+          </div>
+          <div class="field">
+            <label for="role">Role</label>
+            <select id="role" name="role">
+              <option value="Staff" <%= staffUser.role !== 'owner' ? 'selected' : '' %>>Staff</option>
+              <option value="Admin" <%= staffUser.role === 'owner' ? 'selected' : '' %>>Admin</option>
+            </select>
+          </div>
+          <div class="actions-row">
+            <button type="submit" class="btn">Save Changes</button>
+            <a href="/staff" class="btn btn-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

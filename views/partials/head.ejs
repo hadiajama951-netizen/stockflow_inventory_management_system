@@ -1,0 +1,20 @@
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title : 'StockFlow' %></title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/password-toggle.js" defer></script>
+  <script src="/js/confirm-modal.js" defer></script>
+  <script src="/js/dropdown.js" defer></script>
+  <script src="/js/mobile-nav.js" defer></script>
+  <% if (typeof accentColor !== 'undefined' && accentColor) { %>
+    <style>
+      :root {
+        --accent: <%= accentColor %>;
+        --accent-dark: <%= accentColorDark %>;
+      }
+    </style>
+  <% } %>
+</head>

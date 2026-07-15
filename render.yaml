@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: stockflow
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: DEFAULT_SHOP_NAME
+        value: StockFlow Demo Shop
+      - key: DEFAULT_CURRENCY
+        value: "$"
+      - key: DEMO_MODE
+        value: "true"
+# Note: Render's FREE web service plan does not support persistent disks
+# (that's a paid-plan feature). On the free plan, the SQLite database
+# resets whenever the service restarts or redeploys -- which is fine for
+# a demo, since DEMO_MODE already reseeds sample data automatically. If
+# you upgrade to a paid instance type, you can uncomment the block below
+# to keep the database file across restarts:
+#     disk:
+#       name: stockflow-data
+#       mountPath: /opt/render/project/src/db
+#       sizeGB: 1
